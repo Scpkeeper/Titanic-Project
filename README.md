@@ -1,7 +1,7 @@
 # 🚢 Titanic - Machine Learning from Disaster
 
 > A complete, production-ready ML pipeline for the **Kaggle Titanic Competition**.
-> Target accuracy: **> 0.80** on the public leaderboard.
+> Target accuracy: **>0.90** on the public leaderboard.
 
 ---
 
