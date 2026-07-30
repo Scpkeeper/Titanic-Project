@@ -1,0 +1,106 @@
+# =============================================================================
+# Titanic ML Project — Configuration
+# =============================================================================
+# Usage: python src/train.py --config configs/config.yaml
+#        python src/predict.py --config configs/config.yaml
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# General Settings
+# ---------------------------------------------------------------------------
+random_state: 42
+test_size: 0.2          # Validation split fraction
+
+# Cross-validation
+cv_folds: 5             # StratifiedKFold n_splits
+
+# Model to use (for single-model runs)
+model_name: "random_forest"
+# Options: logistic_regression, random_forest, gradient_boosting,
+#          xgboost, lightgbm, svm, mlp
+
+# Hyperparameter tuning method
+tuning_method: "gridsearch"   # Options: gridsearch, optuna
+# If optuna: set optuna_trials below
+optuna_trials: 100
+
+# ---------------------------------------------------------------------------
+# Data Paths
+# ---------------------------------------------------------------------------
+data_dir: "./data"
+output_dir: "./outputs"
+
+# ---------------------------------------------------------------------------
+# Feature Engineering Flags
+# ---------------------------------------------------------------------------
+features:
+  family_size: true       # FamilySize = SibSp + Parch + 1
+  is_alone: true          # IsAlone binary flag
+  title: true             # Extract & normalize title from Name
+  fare_bins: true         # Fare quantile bins (5 levels)
+  age_bands: true         # Age categorical bands (5 levels)
+  deck: true              # Deck letter from Cabin
+  interactions: false     # Interaction features (Sex×Pclass, etc.)
+
+# ---------------------------------------------------------------------------
+# Preprocessing Settings
+# ---------------------------------------------------------------------------
+preprocessing:
+  fill_age_by_group: true    # Impute Age by (Title, Sex, Pclass) median
+  encode_categorical: true   # Label encode Sex, Embarked
+  scale_features: true       # StandardScaler on numeric features
+  extract_deck: true          # Extract Deck letter from Cabin
+
+# ---------------------------------------------------------------------------
+# Model Hyperparameters (overrides defaults)
+# ---------------------------------------------------------------------------
+# These are used as base params; GridSearchCV/Optuna will search around them.
+model_params:
+  random_forest:
+    n_estimators: 200
+    max_depth: 10
+    min_samples_split: 5
+    criterion: "gini"
+
+  xgboost:
+    n_estimators: 200
+    max_depth: 5
+    learning_rate: 0.05
+    subsample: 0.8
+
+  lightgbm:
+    n_estimators: 200
+    num_leaves: 31
+    learning_rate: 0.05
+
+  svm:
+    C: 1.0
+    kernel: "rbf"
+
+  mlp:
+    hidden_layer_sizes: [128, 64]
+    alpha: 0.0001
+    max_iter: 1000
+
+  logistic_regression:
+    C: 1.0
+    penalty: "l2"
+    solver: "liblinear"
+
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
+logging:
+  level: INFO           # DEBUG, INFO, WARNING, ERROR
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# ---------------------------------------------------------------------------
+# Submission
+# ---------------------------------------------------------------------------
+submission:
+  output_file: "submission.csv"
+  format:
+    columns: ["PassengerId", "Survived"]
+    passenger_id_col: "PassengerId"
+    prediction_col: "Survived"
+    prediction_dtype: int
