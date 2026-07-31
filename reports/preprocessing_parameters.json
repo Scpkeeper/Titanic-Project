@@ -1,0 +1,83 @@
+{
+  "source_files": {
+    "train_name": "train.csv",
+    "test_name": "test.csv",
+    "train_sha256": "4a437fde05fe5264e1701a7387ac6fb75393772ba38bb2c9c566405af5af4bd7",
+    "test_sha256": "5c78320a80dc159b35c408363be46a5d93f078183d539db75ee42a796d6a4e95"
+  },
+  "age_imputation": {
+    "title_pclass_sex_medians": {
+      "Master|1|male": 4.0,
+      "Master|2|male": 1.0,
+      "Master|3|male": 4.0,
+      "Miss|1|female": 30.0,
+      "Miss|2|female": 24.0,
+      "Miss|3|female": 18.0,
+      "Mr|1|male": 40.0,
+      "Mr|2|male": 31.0,
+      "Mr|3|male": 26.0,
+      "Mrs|1|female": 40.0,
+      "Mrs|2|female": 32.0,
+      "Mrs|3|female": 31.0,
+      "Rare|1|female": 48.0,
+      "Rare|1|male": 49.0,
+      "Rare|2|male": 46.5
+    },
+    "title_pclass_medians": {
+      "Master|1": 4.0,
+      "Master|2": 1.0,
+      "Master|3": 4.0,
+      "Miss|1": 30.0,
+      "Miss|2": 24.0,
+      "Miss|3": 18.0,
+      "Mr|1": 40.0,
+      "Mr|2": 31.0,
+      "Mr|3": 26.0,
+      "Mrs|1": 40.0,
+      "Mrs|2": 32.0,
+      "Mrs|3": 31.0,
+      "Rare|1": 48.5,
+      "Rare|2": 46.5
+    },
+    "pclass_medians": {
+      "1": 37.0,
+      "2": 29.0,
+      "3": 24.0
+    },
+    "overall_median": 28.0
+  },
+  "fare_imputation": {
+    "pclass_medians": {
+      "1": 60.287499999999994,
+      "2": 14.25,
+      "3": 8.05
+    },
+    "overall_median": 14.4542
+  },
+  "embarked_mode": "S",
+  "ticket_prefix_min_count": 10,
+  "frequent_ticket_prefixes": [
+    "A",
+    "CA",
+    "NONE",
+    "PC",
+    "SCPARIS",
+    "SOTONOQ",
+    "STONO",
+    "WC"
+  ],
+  "fare_band_edges": [
+    "-inf",
+    7.9104,
+    14.4542,
+    31.0,
+    "inf"
+  ],
+  "fare_band_labels": [
+    "Q1",
+    "Q2",
+    "Q3",
+    "Q4"
+  ],
+  "cv_rule": "正式 CV 必须从原始数据调用 make_model_pipeline；所有学习型预处理和特征选择均在训练折内拟合"
+}

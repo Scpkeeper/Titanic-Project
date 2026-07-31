@@ -1,0 +1,29 @@
+field,type,source,definition,modeling_guidance
+PassengerId,整数,原始,乘客唯一标识,仅追踪和提交，不作模型特征
+Survived,0/1,原始（仅训练）,是否幸存,目标变量
+Pclass,类别,原始,舱位等级,One-Hot
+Sex,类别,原始,性别,One-Hot
+SexEncoded,0/1,Sex,male=0，female=1,候选特征
+AgeFilled,连续,Age,折内分组中位数填补年龄,折内标准化
+AgeBand,类别,AgeFilled,固定年龄段,One-Hot
+SibSp,整数,原始,兄弟姐妹/配偶数,候选特征
+Parch,整数,原始,父母/子女数,候选特征
+FamilySize,整数,SibSp+Parch+1,同行家庭规模,候选特征
+FamilyGroup,类别,FamilySize,Solo/Small/Medium/Large,One-Hot
+IsAlone,0/1,FamilySize,是否独行,候选特征
+FareFilled,连续,Fare,折内按 Pclass 中位数填补,折内标准化
+FareLog,连续,FareFilled,log(1+Fare),候选特征
+FarePerPerson,连续,FareFilled/FamilySize,人均票价,候选特征
+FareBand,类别,FareFilled,折内票价四分位,One-Hot
+EmbarkedFilled,类别,Embarked,折内众数填补登船港口,One-Hot
+Title,类别,Name,姓名称谓并合并稀有称谓,One-Hot
+CabinDeck,类别,Cabin,舱号首字母；未知为 U,One-Hot
+HasCabin,0/1,Cabin,是否有舱号记录,候选特征
+TicketPrefix,类别,Ticket,船票前缀；折内低频归 OTHER,One-Hot
+SexPclass,类别,Sex×Pclass,性别与舱位交互,One-Hot
+AgePclass,连续,AgeFilled×Pclass,年龄舱位交互,候选特征
+NameLength,整数,Name,姓名字符长度,候选特征
+WomenChildPriority,0/1,Sex+AgeFilled,妇女儿童优先规则,候选特征
+AgeMissing,0/1,Age,原始年龄是否缺失,候选特征
+FareMissing,0/1,Fare,原始票价是否缺失,候选特征
+CabinMissing,0/1,Cabin,原始舱号是否缺失,候选特征

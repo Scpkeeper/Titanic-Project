@@ -1,0 +1,80 @@
+{
+  "status": "PASS",
+  "raw_train_shape": [
+    891,
+    12
+  ],
+  "raw_test_shape": [
+    418,
+    11
+  ],
+  "clean_train_shape": [
+    891,
+    28
+  ],
+  "clean_test_shape": [
+    418,
+    27
+  ],
+  "model_ready_train_shape": [
+    891,
+    22
+  ],
+  "model_ready_test_shape": [
+    418,
+    21
+  ],
+  "raw_missing_values": {
+    "train": 866,
+    "test": 414
+  },
+  "clean_missing_values": {
+    "train": 0,
+    "test": 0
+  },
+  "model_ready_missing_values": {
+    "train": 0,
+    "test": 0
+  },
+  "candidate_encoded_feature_count": 67,
+  "selected_feature_count": 20,
+  "selected_features": [
+    "FareFilled",
+    "SexEncoded",
+    "FareLog",
+    "FarePerPerson",
+    "HasCabin",
+    "AgePclass",
+    "NameLength",
+    "WomenChildPriority",
+    "CabinMissing",
+    "Pclass_1",
+    "Pclass_3",
+    "Sex_female",
+    "Sex_male",
+    "Title_Miss",
+    "Title_Mr",
+    "Title_Mrs",
+    "CabinDeck_U",
+    "SexPclass_female_P1",
+    "SexPclass_female_P2",
+    "SexPclass_male_P3"
+  ],
+  "best_k": "20",
+  "inner_cv_best_accuracy": 0.8417362375243236,
+  "nested_outer_accuracy_mean": 0.835019772770071,
+  "nested_outer_accuracy_std": 0.022614903742743917,
+  "nested_outer_fold_scores": [
+    0.8324022346368715,
+    0.848314606741573,
+    0.7921348314606742,
+    0.848314606741573,
+    0.8539325842696629
+  ],
+  "oof_accuracy": 0.835016835016835,
+  "formal_evaluation_rule": "使用原始 train.csv + make_model_pipeline；禁止对 model_ready.csv 再做正式 CV",
+  "train_test_model_features_aligned": true,
+  "all_model_ready_features_numeric": true,
+  "no_absolute_personal_paths_in_deliverables": true,
+  "random_state": 42
+}

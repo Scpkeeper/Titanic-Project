@@ -1,0 +1,13 @@
+step,item,rule,status
+1,结构校验,严格检查列名、891/418 行、PassengerId 唯一,PASS
+2,Age,折内按 Title+Pclass+Sex 中位数填补并逐级回退,PASS
+3,Fare,折内按 Pclass 中位数填补,PASS
+4,Embarked,折内训练数据众数填补,PASS
+5,Cabin,不虚构房号；提取 HasCabin/CabinDeck，未知为 U,PASS
+6,Name/Title,提取称谓；同义词合并；其余归 Rare,PASS
+7,Ticket,提取前缀；折内计数少于 10 归 OTHER,PASS
+8,家庭特征,FamilySize、FamilyGroup、IsAlone,PASS
+9,编码与缩放,折内 One-Hot；Age/Fare 折内 StandardScaler,PASS
+10,特征选择,折内 SelectKBest；k 由内层 CV 选择,PASS
+11,模型评估,5×4 嵌套分层 CV，外层分数用于无偏估计,PASS
+12,路径,只使用相对路径和 CLI 参数；报告不含个人本地路径,PASS

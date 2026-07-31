@@ -1,0 +1,110 @@
+{
+  "timestamp_utc": "2026-07-28T13:02:25.050864+00:00",
+  "status": "PASS",
+  "artifacts_checked": 17,
+  "artifacts_matched": 17,
+  "comparison": [
+    {
+      "artifact": "data/Titanic_train_clean.csv",
+      "reference_sha256": "c74d7e8254ab3f90fc30f3102ad3a5e877549dbd3c6a7da13ccf7b5efb64922e",
+      "candidate_sha256": "c74d7e8254ab3f90fc30f3102ad3a5e877549dbd3c6a7da13ccf7b5efb64922e",
+      "match": true
+    },
+    {
+      "artifact": "data/Titanic_test_clean.csv",
+      "reference_sha256": "796caec9784793c188fcc838b4a92a84093daa6c09bb98b55e7a91f7ec493fae",
+      "candidate_sha256": "796caec9784793c188fcc838b4a92a84093daa6c09bb98b55e7a91f7ec493fae",
+      "match": true
+    },
+    {
+      "artifact": "data/Titanic_train_model_ready.csv",
+      "reference_sha256": "fccfbab881f5e103f0cf66cf0f18d9faeeb305bca8037c402c9424ad620ab17c",
+      "candidate_sha256": "fccfbab881f5e103f0cf66cf0f18d9faeeb305bca8037c402c9424ad620ab17c",
+      "match": true
+    },
+    {
+      "artifact": "data/Titanic_test_model_ready.csv",
+      "reference_sha256": "484da9d324c51f6bc8fa031b944d692efd47cdb3465df84f71cc04165b877406",
+      "candidate_sha256": "484da9d324c51f6bc8fa031b944d692efd47cdb3465df84f71cc04165b877406",
+      "match": true
+    },
+    {
+      "artifact": "reports/nested_cv_results.csv",
+      "reference_sha256": "e9baed15a0f353ef80deb775913528e093cee97311550b78e2efc89044e80612",
+      "candidate_sha256": "e9baed15a0f353ef80deb775913528e093cee97311550b78e2efc89044e80612",
+      "match": true
+    },
+    {
+      "artifact": "reports/feature_selection_results.csv",
+      "reference_sha256": "2c8e234808b14c80b6ac25e5bd9f8fc34e99764e28b3666d3cad21df3da7d3a6",
+      "candidate_sha256": "2c8e234808b14c80b6ac25e5bd9f8fc34e99764e28b3666d3cad21df3da7d3a6",
+      "match": true
+    },
+    {
+      "artifact": "reports/feature_scores.csv",
+      "reference_sha256": "7b776edff20367d70aa1382f5bc4139634bfce416b69cc485f4307e7312ece1b",
+      "candidate_sha256": "7b776edff20367d70aa1382f5bc4139634bfce416b69cc485f4307e7312ece1b",
+      "match": true
+    },
+    {
+      "artifact": "reports/missing_values_before_after.csv",
+      "reference_sha256": "e130dfabe7c4d3f3e4c9f68e39c16c0b706ebd097599dd9287d8e4cd88ead492",
+      "candidate_sha256": "e130dfabe7c4d3f3e4c9f68e39c16c0b706ebd097599dd9287d8e4cd88ead492",
+      "match": true
+    },
+    {
+      "artifact": "reports/field_dictionary.csv",
+      "reference_sha256": "be7a6593cd3a172047428bd70bbd013c68af3a1e8ec0a59ba658e80e2d46950a",
+      "candidate_sha256": "be7a6593cd3a172047428bd70bbd013c68af3a1e8ec0a59ba658e80e2d46950a",
+      "match": true
+    },
+    {
+      "artifact": "reports/cleaning_rules.csv",
+      "reference_sha256": "c49852b635103ad658a89a55752d24b5ee6b37d778c9cf7d9ecc8fea2a2cd8c5",
+      "candidate_sha256": "c49852b635103ad658a89a55752d24b5ee6b37d778c9cf7d9ecc8fea2a2cd8c5",
+      "match": true
+    },
+    {
+      "artifact": "reports/selected_features.txt",
+      "reference_sha256": "bce44ba72ee23fe32e1f5dd6e365f58174c48bbe3f78dda13feef7b889ba54af",
+      "candidate_sha256": "bce44ba72ee23fe32e1f5dd6e365f58174c48bbe3f78dda13feef7b889ba54af",
+      "match": true
+    },
+    {
+      "artifact": "reports/preprocessing_parameters.json",
+      "reference_sha256": "f5b688e451da7a84e577d11812c76ab8fc5d7bc6361a526ed29313795a77d497",
+      "candidate_sha256": "f5b688e451da7a84e577d11812c76ab8fc5d7bc6361a526ed29313795a77d497",
+      "match": true
+    },
+    {
+      "artifact": "reports/oof_predictions.json",
+      "reference_sha256": "720906bfc1321a87ec0818b1fd02ab7e660b9b00d707aa15ba69c393af21fcb4",
+      "candidate_sha256": "720906bfc1321a87ec0818b1fd02ab7e660b9b00d707aa15ba69c393af21fcb4",
+      "match": true
+    },
+    {
+      "artifact": "reports/quality_report.json",
+      "reference_sha256": "eddd51f5e85ebadb5a80540dd7a866e4128023520702af3adb53dcaa426740ba",
+      "candidate_sha256": "eddd51f5e85ebadb5a80540dd7a866e4128023520702af3adb53dcaa426740ba",
+      "match": true
+    },
+    {
+      "artifact": "reports/feature_selection_cv.png",
+      "reference_sha256": "68cdc22f2e1dfe24614d7bc4f56def1b25a56d1c70b4710943326dbcaf2e51f4",
+      "candidate_sha256": "68cdc22f2e1dfe24614d7bc4f56def1b25a56d1c70b4710943326dbcaf2e51f4",
+      "match": true
+    },
+    {
+      "artifact": "models/titanic_b_transform_selector.joblib",
+      "reference_sha256": "b74cb2ad169ca0bec0fd17609c277dd5c1ef6de28d401e897e03f269e0b37370",
+      "candidate_sha256": "b74cb2ad169ca0bec0fd17609c277dd5c1ef6de28d401e897e03f269e0b37370",
+      "match": true
+    },
+    {
+      "artifact": "models/titanic_b_logistic_baseline.joblib",
+      "reference_sha256": "0f429e631cbabb1614b99b39bfba213eff886ebaea1344a8716839a8c5aea389",
+      "candidate_sha256": "0f429e631cbabb1614b99b39bfba213eff886ebaea1344a8716839a8c5aea389",
+      "match": true
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "timestamp_utc": "2026-07-28T13:03:38.529235+00:00",
+  "tests_run": 10,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "successful": true,
+  "output": "test_01_raw_data_contract (test_titanic_b_pipeline.TitanicBPipelineTests.test_01_raw_data_contract) ... ok\ntest_02_feature_engineering_removes_missing (test_titanic_b_pipeline.TitanicBPipelineTests.test_02_feature_engineering_removes_missing) ... ok\ntest_03_row_order_and_ids_are_preserved (test_titanic_b_pipeline.TitanicBPipelineTests.test_03_row_order_and_ids_are_preserved) ... ok\ntest_04_expected_features_are_created (test_titanic_b_pipeline.TitanicBPipelineTests.test_04_expected_features_are_created) ... ok\ntest_05_fit_does_not_use_target (test_titanic_b_pipeline.TitanicBPipelineTests.test_05_fit_does_not_use_target) ... ok\ntest_06_unknown_categories_are_safe (test_titanic_b_pipeline.TitanicBPipelineTests.test_06_unknown_categories_are_safe) ... ok\ntest_07_cross_validation_runs_from_raw_data (test_titanic_b_pipeline.TitanicBPipelineTests.test_07_cross_validation_runs_from_raw_data) ... ok\ntest_08_exported_clean_data_contract (test_titanic_b_pipeline.TitanicBPipelineTests.test_08_exported_clean_data_contract) ... ok\ntest_09_exported_model_ready_alignment (test_titanic_b_pipeline.TitanicBPipelineTests.test_09_exported_model_ready_alignment) ... ok\ntest_10_quality_report_passes (test_titanic_b_pipeline.TitanicBPipelineTests.test_10_quality_report_passes) ... ok\n\n----------------------------------------------------------------------\nRan 10 tests in 0.979s\n\nOK\n"
+}
