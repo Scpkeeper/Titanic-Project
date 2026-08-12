@@ -18,7 +18,7 @@
 
 ## 验收结果
 
-- 自动化测试：10/10 通过。
+- 自动化测试：11/11 通过。
 - 独立重复运行：17/17 个确定性产物的 SHA-256 完全一致。
 - 清洗后缺失值：训练集 0，测试集 0。
 - 原始数据：训练集 891×12，测试集 418×11。
@@ -27,6 +27,16 @@
 - 最终选择特征：20。
 - 无泄漏嵌套 CV Accuracy：`0.8350 ± 0.0226`。
 - OOF Accuracy：`0.8350`。
+
+## Seed-42 submission result
+
+- Cross-validation splitters now use the same fixed seed, `42`, for both
+  the outer and inner folds.
+- Latest local nested-CV result: `0.8384 ± 0.0131`; OOF accuracy: `0.8384`.
+- Kaggle public leaderboard result for `submission.csv`: `0.77511`.
+
+The Kaggle score is the external test-set result and is the value to compare
+when trying later model improvements.
 
 ## 目录说明
 
