@@ -462,7 +462,7 @@ def run_nested_cv(
         inner = StratifiedKFold(
             n_splits=4,
             shuffle=True,
-            random_state=RANDOM_STATE + fold,
+            random_state=RANDOM_STATE,
         )
         search = GridSearchCV(
             estimator=make_model_pipeline(),
