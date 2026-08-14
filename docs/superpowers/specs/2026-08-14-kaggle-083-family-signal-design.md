@@ -183,7 +183,7 @@ a failing test, followed by the smallest implementation that passes it.
 
 ## GitHub Delivery
 
-Development occurs on `agent/kaggle-083-family-signal`. Only files belonging
+Development occurs on `kaggle-083-family-signal`. Only files belonging
 to this improvement are staged. After fresh verification, the branch is pushed
 to `Scpkeeper/Titanic-Project` and opened as a draft pull request describing
 the method, evidence, limitations, generated submission, and validation run.
