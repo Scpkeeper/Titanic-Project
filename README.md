@@ -1,5 +1,22 @@
 # Titanic 竞赛模块 B：最终完整交付
 
+## Latest official-data-only 0.83 experiment
+
+The `kaggle-083-family-signal` branch adds a leakage-safe CatBoost experiment
+using cross-fitted surname-family and ticket survival evidence. The full nested
+run achieved `0.8328` signal OOF accuracy versus `0.8384` for the same-split
+CatBoost baseline. Because the signal model did not beat the baseline, the
+promotion gate retained the uploaded `0.79186` Kaggle CatBoost submission.
+
+- Recommended upload: `outputs/submission_recommended.csv`
+- Experimental upload: `outputs/submission_family_ticket_catboost.csv`
+- Run manifest: `reports/family_ticket/run_manifest.json`
+- Human-readable result: `reports/family_ticket/overview.md`
+- Detailed execution log: `docs/EXPERIMENT_LOG.md`
+
+The `0.83` public leaderboard goal is not claimed until Kaggle scores a new
+submission. No external labels or third-party Titanic datasets were used.
+
 本目录完成了模块 B 要求的缺失值处理、特征工程、分类变量编码、连续变量
 标准化、特征选择、无数据泄漏交叉验证和质量测试。
 

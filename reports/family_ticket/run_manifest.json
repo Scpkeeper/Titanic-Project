@@ -1,0 +1,167 @@
+{
+  "baseline_difference_rows": 16,
+  "comparison": {
+    "baseline_accuracy": 0.8383838383838383,
+    "baseline_f1": 0.7699680511182109,
+    "baseline_roc_auc": 0.8871100033021229,
+    "signal_accuracy": 0.8327721661054994,
+    "signal_f1": 0.7638668779714739,
+    "signal_roc_auc": 0.8904334302666197
+  },
+  "evidence_coverage": {
+    "family_rows": 51,
+    "policy_changed": 0,
+    "policy_family_low": 0,
+    "policy_ticket_high": 0,
+    "ticket_rows": 72
+  },
+  "fold_metrics": [
+    {
+      "baseline_accuracy": 0.8603351955307262,
+      "baseline_f1": 0.8,
+      "baseline_roc_auc": 0.9152832674571805,
+      "fold": 1,
+      "policy_changed": 2,
+      "policy_family_low": 13,
+      "policy_ticket_high": 3,
+      "selected_configuration": {
+        "decision_threshold": 0.58,
+        "min_support": 2,
+        "policy": "conservative",
+        "smoothing": 2.0
+      },
+      "signal_accuracy": 0.8547486033519553,
+      "signal_f1": 0.7903225806451613,
+      "signal_roc_auc": 0.9146245059288538
+    },
+    {
+      "baseline_accuracy": 0.848314606741573,
+      "baseline_f1": 0.7874015748031497,
+      "baseline_roc_auc": 0.9013368983957218,
+      "fold": 2,
+      "policy_changed": 0,
+      "policy_family_low": 0,
+      "policy_ticket_high": 0,
+      "selected_configuration": {
+        "decision_threshold": 0.58,
+        "min_support": 2,
+        "policy": "none",
+        "smoothing": 2.0
+      },
+      "signal_accuracy": 0.8426966292134831,
+      "signal_f1": 0.7666666666666667,
+      "signal_roc_auc": 0.8975267379679144
+    },
+    {
+      "baseline_accuracy": 0.8146067415730337,
+      "baseline_f1": 0.7226890756302521,
+      "baseline_roc_auc": 0.8636363636363636,
+      "fold": 3,
+      "policy_changed": 0,
+      "policy_family_low": 0,
+      "policy_ticket_high": 0,
+      "selected_configuration": {
+        "decision_threshold": 0.5,
+        "min_support": 2,
+        "policy": "none",
+        "smoothing": 2.0
+      },
+      "signal_accuracy": 0.7865168539325843,
+      "signal_f1": 0.6984126984126984,
+      "signal_roc_auc": 0.8673128342245989
+    },
+    {
+      "baseline_accuracy": 0.8370786516853933,
+      "baseline_f1": 0.7786259541984732,
+      "baseline_roc_auc": 0.8863636363636364,
+      "fold": 4,
+      "policy_changed": 0,
+      "policy_family_low": 0,
+      "policy_ticket_high": 0,
+      "selected_configuration": {
+        "decision_threshold": 0.5,
+        "min_support": 2,
+        "policy": "none",
+        "smoothing": 2.0
+      },
+      "signal_accuracy": 0.8370786516853933,
+      "signal_f1": 0.7786259541984732,
+      "signal_roc_auc": 0.8914438502673798
+    },
+    {
+      "baseline_accuracy": 0.8314606741573034,
+      "baseline_f1": 0.7580645161290323,
+      "baseline_roc_auc": 0.8774099188937641,
+      "fold": 5,
+      "policy_changed": 0,
+      "policy_family_low": 0,
+      "policy_ticket_high": 0,
+      "selected_configuration": {
+        "decision_threshold": 0.5,
+        "min_support": 2,
+        "policy": "none",
+        "smoothing": 2.0
+      },
+      "signal_accuracy": 0.8426966292134831,
+      "signal_f1": 0.7846153846153846,
+      "signal_roc_auc": 0.8960244648318043
+    }
+  ],
+  "generated_at_utc": "2026-08-14T16:26:53.898904+00:00",
+  "git_commit": "c774303416511b7f425a60f2b542bf28ff5eef53",
+  "grouped_robustness": {
+    "baseline_accuracy": 0.8282828282828283,
+    "signal_accuracy": 0.8103254769921436
+  },
+  "inner_folds": 3,
+  "mode": "full",
+  "oof_rows": 891,
+  "outer_folds": 5,
+  "output_hashes": {
+    "baseline_submission": "9f0e457abe1b75527b1b998a738903949b6ccba36a37929d01b6a24590278ee7",
+    "comparison": "c92aca3330fbd9e937d1ef29d7e8333941e192f5c23353bfb691ffb52039bf08",
+    "configuration_results": "dfbd22ece1d7eadef8fac75a20ec356d2597f0e39b3b64c3ec9ec20744e176d2",
+    "difference_audit": "be45c9d03ad4ba209475ab91e0f7cbeaf2446f663f2225300d754a0e614551a5",
+    "fold_metrics": "158fcc54eef19572fa6b7d99c694ad794d592efc1f1d0450e401f66b239c825f",
+    "model": "4e284487d63df410e77cc006244d847552eafe7cd12ec78fc2fe0a38c84a3db1",
+    "oof": "3255592078e9e517117d0f11d948a70623d1f37a3a77ffec8db14867568f4ecc",
+    "overview": "7a35c82cb0727995e4cebe4465151deb348c8e767d320e66c6b974347dbc1127",
+    "recommended_submission": "9f0e457abe1b75527b1b998a738903949b6ccba36a37929d01b6a24590278ee7",
+    "submission": "66caf96bf99e85670df8aba6673900f629ddc1e1d5d5b85eaf9f4f8bd5e7a3b3"
+  },
+  "output_paths": {
+    "baseline_submission": "outputs\\submission_catboost_baseline.csv",
+    "comparison": "reports\\family_ticket\\model_comparison.csv",
+    "configuration_results": "reports\\family_ticket\\configuration_results.csv",
+    "difference_audit": "reports\\family_ticket\\submission_difference.csv",
+    "fold_metrics": "reports\\family_ticket\\outer_fold_metrics.csv",
+    "model": "models\\family_ticket_catboost.joblib",
+    "oof": "reports\\family_ticket\\oof_predictions.csv",
+    "overview": "reports\\family_ticket\\overview.md",
+    "recommended_submission": "outputs\\submission_recommended.csv",
+    "submission": "outputs\\submission_family_ticket_catboost.csv"
+  },
+  "predicted_survivors": 149,
+  "promotion_status": "baseline_retained",
+  "random_state": 42,
+  "recommended_predicted_survivors": 143,
+  "selected_configuration": {
+    "decision_threshold": 0.5,
+    "min_support": 2,
+    "policy": "none",
+    "smoothing": 2.0
+  },
+  "source_hashes": {
+    "test": "56023b9948236f3c7a1c9448fcf418b283e109ef177fa8c7e069158dd7dd52b2",
+    "train": "7d118fef8b6ccf7f81111877bc388536f7b1e498a655e3d649d19aaa010e9f6f"
+  },
+  "status": "PASS",
+  "versions": {
+    "catboost": "1.2.10",
+    "joblib": "1.5.3",
+    "numpy": "2.5.2",
+    "pandas": "3.0.5",
+    "python": "3.12.13",
+    "scikit_learn": "1.9.0"
+  }
+}

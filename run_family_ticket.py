@@ -43,8 +43,12 @@ def main() -> int:
         + json.dumps(result["selected_configuration"], sort_keys=True)
     )
     print(f"Changed test predictions: {result['baseline_difference_rows']}")
-    print(f"Primary submission: {result['output_paths']['submission']}")
-    print("Kaggle target 0.83 is unverified until this CSV is submitted.")
+    print(f"Promotion decision: {result['promotion_status']}")
+    print(
+        "Recommended submission: "
+        f"{result['output_paths']['recommended_submission']}"
+    )
+    print("Kaggle target 0.83 is unverified until the recommended CSV is submitted.")
     return 0
 
 
