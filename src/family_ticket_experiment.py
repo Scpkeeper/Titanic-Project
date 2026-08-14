@@ -99,7 +99,7 @@ def _metrics(y: np.ndarray, probability: np.ndarray, threshold: float) -> dict[s
 
 def _model_params(quick: bool, random_state: int) -> dict[str, Any]:
     return {
-        "iterations": 40 if quick else 320,
+        "iterations": 40 if quick else 260,
         "depth": 4 if quick else 5,
         "learning_rate": 0.08 if quick else 0.03,
         "l2_leaf_reg": 5.0,
@@ -113,7 +113,7 @@ def _candidate_grid(quick: bool) -> list[dict[str, Any]]:
     if quick:
         return [
             {
-                "smoothing": 1.0,
+                "smoothing": 2.0,
                 "min_support": 2,
                 "decision_threshold": 0.50,
                 "policy": "none",
@@ -121,23 +121,24 @@ def _candidate_grid(quick: bool) -> list[dict[str, Any]]:
             {
                 "smoothing": 2.0,
                 "min_support": 2,
-                "decision_threshold": 0.50,
-                "policy": "conservative",
+                "decision_threshold": 0.58,
+                "policy": "none",
             },
         ]
     return [
         {
-            "smoothing": smoothing,
-            "min_support": support,
+            "smoothing": 2.0,
+            "min_support": 2,
             "decision_threshold": threshold,
             "policy": policy,
         }
-        for smoothing, support, threshold, policy in [
-            (1.0, 2, 0.50, "none"),
-            (2.0, 2, 0.50, "none"),
-            (2.0, 2, 0.50, "conservative"),
-            (4.0, 2, 0.50, "conservative"),
-            (2.0, 3, 0.48, "conservative"),
+        for threshold, policy in [
+            (0.50, "none"),
+            (0.54, "none"),
+            (0.58, "none"),
+            (0.50, "conservative"),
+            (0.54, "conservative"),
+            (0.58, "conservative"),
         ]
     ]
 
@@ -161,6 +162,7 @@ def _apply_policy(
     X: pd.DataFrame,
     probability: np.ndarray,
     policy: str,
+    decision_threshold: float | None = None,
 ) -> tuple[np.ndarray, dict[str, int]]:
     adjusted = np.asarray(probability, dtype=float).copy()
     if policy == "none":
@@ -185,10 +187,11 @@ def _apply_policy(
         & signals["ticket_probability"].ge(0.65)
         & signals["ticket_support"].ge(2)
     )
-    before = adjusted >= model.decision_threshold
+    threshold = model.decision_threshold if decision_threshold is None else decision_threshold
+    before = adjusted >= threshold
     adjusted[family_low.to_numpy()] = np.minimum(adjusted[family_low.to_numpy()], 0.20)
     adjusted[ticket_high.to_numpy()] = np.maximum(adjusted[ticket_high.to_numpy()], 0.80)
-    after = adjusted >= model.decision_threshold
+    after = adjusted >= threshold
     return adjusted, {
         "family_low": int(family_low.sum()),
         "ticket_high": int(ticket_high.sum()),
@@ -196,41 +199,70 @@ def _apply_policy(
     }
 
 
-def _evaluate_config(
+def _evaluate_configs(
     X: pd.DataFrame,
     y: np.ndarray,
-    config: dict[str, Any],
+    configs: list[dict[str, Any]],
     *,
     n_splits: int,
     quick: bool,
     random_state: int,
-) -> dict[str, Any]:
+) -> list[dict[str, Any]]:
     splitter = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=random_state)
-    scores: list[float] = []
-    changed_rows = 0
-    for fold, (train_index, validation_index) in enumerate(splitter.split(X, y), start=1):
-        model = _build_model(
-            config, quick=quick, random_state=random_state + fold * 100
-        ).fit(X.iloc[train_index], y[train_index])
-        probability = model.predict_proba(X.iloc[validation_index])[:, 1]
-        probability, audit = _apply_policy(
-            model, X.iloc[validation_index], probability, config["policy"]
-        )
-        scores.append(
-            float(
-                accuracy_score(
-                    y[validation_index], probability >= config["decision_threshold"]
-                )
-            )
-        )
-        changed_rows += audit["changed"]
-    return {
-        "configuration": config,
-        "mean_accuracy": float(np.mean(scores)),
-        "std_accuracy": float(np.std(scores)),
-        "changed_rows": int(changed_rows),
-        "fold_accuracies": scores,
+    split_list = list(splitter.split(X, y))
+    grouped: dict[tuple[float, int], list[dict[str, Any]]] = {}
+    for config in configs:
+        grouped.setdefault(
+            (float(config["smoothing"]), int(config["min_support"])), []
+        ).append(config)
+    results: dict[str, dict[str, Any]] = {
+        json.dumps(config, sort_keys=True): {
+            "configuration": config,
+            "fold_accuracies": [],
+            "changed_rows": 0,
+        }
+        for config in configs
     }
+    for model_group, model_configs in grouped.items():
+        representative = dict(model_configs[0])
+        representative["decision_threshold"] = 0.5
+        representative["policy"] = "none"
+        for fold, (train_index, validation_index) in enumerate(split_list, start=1):
+            model = _build_model(
+                representative, quick=quick, random_state=random_state + fold * 100
+            ).fit(X.iloc[train_index], y[train_index])
+            raw_probability = model.predict_proba(X.iloc[validation_index])[:, 1]
+            for config in model_configs:
+                probability, audit = _apply_policy(
+                    model,
+                    X.iloc[validation_index],
+                    raw_probability,
+                    config["policy"],
+                    config["decision_threshold"],
+                )
+                record = results[json.dumps(config, sort_keys=True)]
+                record["fold_accuracies"].append(
+                    float(
+                        accuracy_score(
+                            y[validation_index],
+                            probability >= config["decision_threshold"],
+                        )
+                    )
+                )
+                record["changed_rows"] += audit["changed"]
+    finalized = []
+    for config in configs:
+        record = results[json.dumps(config, sort_keys=True)]
+        scores = record["fold_accuracies"]
+        finalized.append(
+            {
+                **record,
+                "mean_accuracy": float(np.mean(scores)),
+                "std_accuracy": float(np.std(scores)),
+                "changed_rows": int(record["changed_rows"]),
+            }
+        )
+    return finalized
 
 
 def _choose_config(results: list[dict[str, Any]]) -> dict[str, Any]:
@@ -366,17 +398,14 @@ def run_experiment(
 
     for fold, (train_index, validation_index) in enumerate(outer.split(X, y), start=1):
         inner_X, inner_y = X.iloc[train_index], y[train_index]
-        config_results = [
-            _evaluate_config(
-                inner_X,
-                inner_y,
-                config,
-                n_splits=inner_folds,
-                quick=quick,
-                random_state=random_state + fold * 1000,
-            )
-            for config in _candidate_grid(quick)
-        ]
+        config_results = _evaluate_configs(
+            inner_X,
+            inner_y,
+            _candidate_grid(quick),
+            n_splits=inner_folds,
+            quick=quick,
+            random_state=random_state + fold * 1000,
+        )
         selected = _choose_config(config_results)
         for result in config_results:
             nested_config_results.append({"outer_fold": fold, **result})
@@ -427,17 +456,14 @@ def run_experiment(
     if np.isnan(signal_oof).any() or np.isnan(baseline_oof).any() or (outer_fold == 0).any():
         raise AssertionError("Outer OOF predictions must cover all training rows")
 
-    full_config_results = [
-        _evaluate_config(
-            X,
-            y,
-            config,
-            n_splits=inner_folds,
-            quick=quick,
-            random_state=random_state + 90000,
-        )
-        for config in _candidate_grid(quick)
-    ]
+    full_config_results = _evaluate_configs(
+        X,
+        y,
+        _candidate_grid(quick),
+        n_splits=inner_folds,
+        quick=quick,
+        random_state=random_state + 90000,
+    )
     selected = _choose_config(full_config_results)
     deployment_model = _build_model(
         selected, quick=quick, random_state=random_state + 100000
@@ -496,6 +522,15 @@ def run_experiment(
         "signal_roc_auc": float(roc_auc_score(y, signal_oof)),
         "baseline_roc_auc": float(roc_auc_score(y, baseline_oof)),
     }
+    promotion_status = (
+        "promoted"
+        if comparison["signal_accuracy"] > comparison["baseline_accuracy"]
+        else "baseline_retained"
+    )
+    recommended = primary if promotion_status == "promoted" else baseline_submission
+    recommended_path = outputs / "submission_recommended.csv"
+    validate_submission(recommended, test["PassengerId"])
+    recommended.to_csv(recommended_path, index=False)
     grouped = _grouped_robustness(
         X, y, selected, quick=quick, random_state=random_state + 200000
     )
@@ -588,8 +623,10 @@ def run_experiment(
                 f"- Uploaded CatBoost Kaggle baseline: `0.79186`",
                 f"- Test predictions changed from uploaded baseline: `{int(difference['Changed'].sum())}`",
                 f"- Selected configuration: `{json.dumps(selected, sort_keys=True)}`",
+                f"- Promotion decision: `{promotion_status}`",
+                f"- Recommended Kaggle file: `outputs/{recommended_path.name}`",
                 "",
-                "The 0.83 Kaggle target remains unverified until the primary CSV is uploaded.",
+                "The 0.83 Kaggle target remains unverified until the recommended CSV is uploaded.",
             ]
         )
         + "\n",
@@ -598,6 +635,7 @@ def run_experiment(
 
     output_paths = {
         "submission": str(primary_path.relative_to(output_root)),
+        "recommended_submission": str(recommended_path.relative_to(output_root)),
         "baseline_submission": str(baseline_path.relative_to(output_root)),
         "model": str(model_path.relative_to(output_root)),
         "oof": str(oof_path.relative_to(output_root)),
@@ -628,12 +666,14 @@ def run_experiment(
         "outer_folds": outer_folds,
         "inner_folds": inner_folds,
         "selected_configuration": selected,
+        "promotion_status": promotion_status,
         "fold_metrics": fold_metrics,
         "comparison": comparison,
         "grouped_robustness": grouped,
         "evidence_coverage": evidence_coverage,
         "oof_rows": len(oof),
         "predicted_survivors": int(primary["Survived"].sum()),
+        "recommended_predicted_survivors": int(recommended["Survived"].sum()),
         "baseline_difference_rows": int(difference["Changed"].sum()),
         "output_paths": output_paths,
         "output_hashes": output_hashes,
@@ -652,7 +692,8 @@ def run_experiment(
         "git_commit": manifest["git_commit"],
         "selected_configuration": selected,
         "comparison": comparison,
-        "submission_sha256": output_hashes["submission"],
+        "promotion_status": promotion_status,
+        "submission_sha256": output_hashes["recommended_submission"],
     }
     with index_path.open("a", encoding="utf-8", newline="\n") as handle:
         handle.write(json.dumps(index_entry, ensure_ascii=False, sort_keys=True) + "\n")
