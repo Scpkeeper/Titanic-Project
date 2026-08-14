@@ -8,11 +8,13 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 
+import titanic_b_pipeline as pipeline_module
 from titanic_b_pipeline import (
     RAW_FEATURE_COLUMNS,
     TitanicFeatureEngineer,
     make_model_pipeline,
     make_transform_pipeline,
+    run_nested_cv,
     validate_raw_data,
 )
 
@@ -136,6 +138,27 @@ class TitanicBPipelineTests(unittest.TestCase):
         self.assertTrue(report["train_test_model_features_aligned"])
         self.assertEqual(report["clean_missing_values"], {"train": 0, "test": 0})
         self.assertGreater(report["nested_outer_accuracy_mean"], 0.78)
+
+    def test_11_nested_cv_uses_fixed_seed_for_every_splitter(self) -> None:
+        observed_seeds = []
+        original_splitter = pipeline_module.StratifiedKFold
+
+        class RecordingStratifiedKFold(original_splitter):
+            def __init__(self, n_splits=5, *, shuffle=False, random_state=None):
+                observed_seeds.append(random_state)
+                super().__init__(
+                    n_splits=n_splits,
+                    shuffle=shuffle,
+                    random_state=random_state,
+                )
+
+        pipeline_module.StratifiedKFold = RecordingStratifiedKFold
+        try:
+            run_nested_cv(self.X.head(100), self.y.head(100))
+        finally:
+            pipeline_module.StratifiedKFold = original_splitter
+
+        self.assertEqual(observed_seeds, [42] * 6)
 
 
 if __name__ == "__main__":
