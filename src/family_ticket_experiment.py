@@ -278,6 +278,22 @@ def _choose_config(results: list[dict[str, Any]]) -> dict[str, Any]:
     return dict(ordered[0]["configuration"])
 
 
+def _blend_weights() -> tuple[float, ...]:
+    return (0.0, 0.25, 0.5, 0.75, 1.0)
+
+
+def _choose_blend_weight(results: list[dict[str, Any]]) -> float:
+    ordered = sorted(
+        results,
+        key=lambda item: (
+            -round(item["mean_accuracy"], 12),
+            item["family_weight"],
+            round(item["std_accuracy"], 12),
+        ),
+    )
+    return float(ordered[0]["family_weight"])
+
+
 def _connected_groups(X: pd.DataFrame) -> np.ndarray:
     keys = normalize_group_keys(X).reset_index(drop=True)
     parent = list(range(len(keys)))

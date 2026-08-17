@@ -8,6 +8,8 @@ from pathlib import Path
 import pandas as pd
 
 from src.family_ticket_experiment import (
+    _blend_weights,
+    _choose_blend_weight,
     run_experiment,
     validate_manifest,
     validate_submission,
@@ -18,6 +20,16 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class FamilyTicketExperimentTests(unittest.TestCase):
+    def test_blend_weights_are_fixed_and_include_both_controls(self) -> None:
+        self.assertEqual(_blend_weights(), (0.0, 0.25, 0.5, 0.75, 1.0))
+
+    def test_blend_selection_prefers_lower_family_weight_on_accuracy_tie(self) -> None:
+        results = [
+            {"family_weight": 0.50, "mean_accuracy": 0.82, "std_accuracy": 0.01},
+            {"family_weight": 0.25, "mean_accuracy": 0.82, "std_accuracy": 0.03},
+        ]
+        self.assertEqual(_choose_blend_weight(results), 0.25)
+
     def test_submission_validator_rejects_invalid_contracts(self) -> None:
         expected = pd.Series([892, 893, 894], dtype=int)
         valid = pd.DataFrame(
