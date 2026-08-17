@@ -5,9 +5,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import joblib
+import numpy as np
 import pandas as pd
 
 from src.family_ticket_experiment import (
+    _apply_policy,
     _blend_weights,
     _choose_blend_weight,
     run_experiment,
@@ -105,7 +108,34 @@ class FamilyTicketExperimentTests(unittest.TestCase):
                 output / "outputs" / "submission_catboost_family_blend.csv"
             )
             validate_submission(blend, test["PassengerId"])
-            self.assertTrue((output / "models" / "family_ticket_catboost.joblib").is_file())
+            model_path = output / "models" / "family_ticket_catboost.joblib"
+            self.assertTrue(model_path.is_file())
+            bundle = joblib.load(model_path)
+            self.assertIn("baseline_model", bundle)
+            self.assertIn("selected_family_weight", bundle)
+            X_reload = test[bundle["raw_feature_columns"]]
+            family_probability, _ = _apply_policy(
+                bundle["model"],
+                X_reload,
+                bundle["model"].predict_proba(X_reload)[:, 1],
+                bundle["policy"],
+                0.50,
+            )
+            baseline_probability = bundle["baseline_model"].predict_proba(X_reload)[:, 1]
+            reproduced_blend = pd.DataFrame(
+                {
+                    "PassengerId": test["PassengerId"].astype(int),
+                    "Survived": (
+                        bundle["selected_family_weight"] * family_probability
+                        + (1.0 - bundle["selected_family_weight"])
+                        * baseline_probability
+                        >= 0.50
+                    ).astype(int),
+                }
+            )
+            np.testing.assert_array_equal(
+                reproduced_blend["Survived"].to_numpy(), blend["Survived"].to_numpy()
+            )
             manifest_path = output / "reports" / "family_ticket" / "run_manifest.json"
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
             validate_manifest(manifest)

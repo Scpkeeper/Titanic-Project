@@ -630,8 +630,11 @@ def run_experiment(
     joblib.dump(
         {
             "model": deployment_model,
+            "baseline_model": deployment_baseline_model,
             "configuration": selected,
             "policy": selected["policy"],
+            "selected_family_weight": deployment_family_weight,
+            "blend_threshold": 0.50,
             "raw_feature_columns": RAW_FEATURE_COLUMNS,
         },
         model_path,
