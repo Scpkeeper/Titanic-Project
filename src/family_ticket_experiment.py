@@ -294,6 +294,59 @@ def _choose_blend_weight(results: list[dict[str, Any]]) -> float:
     return float(ordered[0]["family_weight"])
 
 
+def _evaluate_blend_weights(
+    X: pd.DataFrame,
+    y: np.ndarray,
+    config: dict[str, Any],
+    *,
+    n_splits: int,
+    quick: bool,
+    random_state: int,
+) -> list[dict[str, Any]]:
+    """Select a family-model probability weight using validation-only fits."""
+
+    splitter = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=random_state)
+    results = {
+        weight: {"family_weight": weight, "fold_accuracies": []}
+        for weight in _blend_weights()
+    }
+    for fold, (train_index, validation_index) in enumerate(splitter.split(X, y), start=1):
+        train_X, train_y = X.iloc[train_index], y[train_index]
+        validation_X = X.iloc[validation_index]
+        family = _build_model(
+            config, quick=quick, random_state=random_state + fold * 100
+        ).fit(train_X, train_y)
+        family_probability, _ = _apply_policy(
+            family,
+            validation_X,
+            family.predict_proba(validation_X)[:, 1],
+            config["policy"],
+            0.50,
+        )
+        baseline = _build_model(
+            config,
+            quick=quick,
+            random_state=random_state + fold * 100,
+            baseline=True,
+        ).fit(train_X, train_y)
+        baseline_probability = baseline.predict_proba(validation_X)[:, 1]
+        for weight, record in results.items():
+            blend_probability = (
+                weight * family_probability + (1.0 - weight) * baseline_probability
+            )
+            record["fold_accuracies"].append(
+                float(accuracy_score(y[validation_index], blend_probability >= 0.50))
+            )
+    return [
+        {
+            **record,
+            "mean_accuracy": float(np.mean(record["fold_accuracies"])),
+            "std_accuracy": float(np.std(record["fold_accuracies"])),
+        }
+        for record in results.values()
+    ]
+
+
 def _connected_groups(X: pd.DataFrame) -> np.ndarray:
     keys = normalize_group_keys(X).reset_index(drop=True)
     parent = list(range(len(keys)))
@@ -406,11 +459,15 @@ def run_experiment(
     )
     signal_oof = np.full(len(X), np.nan)
     baseline_oof = np.full(len(X), np.nan)
+    blend_oof = np.full(len(X), np.nan)
     signal_oof_prediction = np.zeros(len(X), dtype=int)
     baseline_oof_prediction = np.zeros(len(X), dtype=int)
+    blend_oof_prediction = np.zeros(len(X), dtype=int)
+    selected_blend_weight = np.full(len(X), np.nan)
     outer_fold = np.zeros(len(X), dtype=int)
     fold_metrics: list[dict[str, Any]] = []
     nested_config_results: list[dict[str, Any]] = []
+    nested_blend_results: list[dict[str, Any]] = []
 
     for fold, (train_index, validation_index) in enumerate(outer.split(X, y), start=1):
         inner_X, inner_y = X.iloc[train_index], y[train_index]
@@ -425,6 +482,17 @@ def run_experiment(
         selected = _choose_config(config_results)
         for result in config_results:
             nested_config_results.append({"outer_fold": fold, **result})
+        blend_results = _evaluate_blend_weights(
+            inner_X,
+            inner_y,
+            selected,
+            n_splits=inner_folds,
+            quick=quick,
+            random_state=random_state + fold * 2000,
+        )
+        family_weight = _choose_blend_weight(blend_results)
+        for result in blend_results:
+            nested_blend_results.append({"outer_fold": fold, **result})
 
         signal = _build_model(
             selected, quick=quick, random_state=random_state + fold * 10000
@@ -450,6 +518,13 @@ def run_experiment(
         baseline_oof_prediction[validation_index] = (
             baseline_oof[validation_index] >= 0.5
         ).astype(int)
+        blend_oof[validation_index] = (
+            family_weight * probability + (1.0 - family_weight) * baseline_oof[validation_index]
+        )
+        blend_oof_prediction[validation_index] = (
+            blend_oof[validation_index] >= 0.50
+        ).astype(int)
+        selected_blend_weight[validation_index] = family_weight
         outer_fold[validation_index] = fold
         signal_metrics = _metrics(
             y[validation_index], probability, selected["decision_threshold"]
@@ -465,11 +540,21 @@ def run_experiment(
                 "baseline_accuracy": baseline_metrics["accuracy"],
                 "baseline_f1": baseline_metrics["f1"],
                 "baseline_roc_auc": baseline_metrics["roc_auc"],
+                "blend_family_weight": family_weight,
+                "blend_accuracy": float(
+                    accuracy_score(y[validation_index], blend_oof_prediction[validation_index])
+                ),
                 **{f"policy_{key}": value for key, value in policy_audit.items()},
             }
         )
 
-    if np.isnan(signal_oof).any() or np.isnan(baseline_oof).any() or (outer_fold == 0).any():
+    if (
+        np.isnan(signal_oof).any()
+        or np.isnan(baseline_oof).any()
+        or np.isnan(blend_oof).any()
+        or np.isnan(selected_blend_weight).any()
+        or (outer_fold == 0).any()
+    ):
         raise AssertionError("Outer OOF predictions must cover all training rows")
 
     full_config_results = _evaluate_configs(
@@ -481,6 +566,15 @@ def run_experiment(
         random_state=random_state + 90000,
     )
     selected = _choose_config(full_config_results)
+    full_blend_results = _evaluate_blend_weights(
+        X,
+        y,
+        selected,
+        n_splits=inner_folds,
+        quick=quick,
+        random_state=random_state + 95000,
+    )
+    deployment_family_weight = _choose_blend_weight(full_blend_results)
     deployment_model = _build_model(
         selected, quick=quick, random_state=random_state + 100000
     ).fit(X, y)
@@ -498,21 +592,36 @@ def run_experiment(
     )
     validate_submission(primary, test["PassengerId"])
 
+    deployment_baseline_model = _build_model(
+        selected, quick=quick, random_state=random_state + 100000, baseline=True
+    ).fit(X, y)
+    baseline_test_probability = deployment_baseline_model.predict_proba(X_test)[:, 1]
+    blend = pd.DataFrame(
+        {
+            "PassengerId": test["PassengerId"].astype(int),
+            "Survived": (
+                deployment_family_weight * test_probability
+                + (1.0 - deployment_family_weight) * baseline_test_probability
+                >= 0.50
+            ).astype(int),
+        }
+    )
+    validate_submission(blend, test["PassengerId"])
+
     primary_path = outputs / "submission_family_ticket_catboost.csv"
     baseline_path = outputs / "submission_catboost_baseline.csv"
+    blend_path = outputs / "submission_catboost_family_blend.csv"
     primary.to_csv(primary_path, index=False)
+    blend.to_csv(blend_path, index=False)
     if baseline_submission_path is not None:
         baseline_submission = pd.read_csv(Path(baseline_submission_path))
         validate_submission(baseline_submission, test["PassengerId"])
         baseline_submission = baseline_submission[["PassengerId", "Survived"]].astype(int)
     else:
-        baseline_model = _build_model(
-            selected, quick=quick, random_state=random_state + 100000, baseline=True
-        ).fit(X, y)
         baseline_submission = pd.DataFrame(
             {
                 "PassengerId": test["PassengerId"].astype(int),
-                "Survived": baseline_model.predict(X_test).astype(int),
+                "Survived": (baseline_test_probability >= 0.50).astype(int),
             }
         )
     baseline_submission.to_csv(baseline_path, index=False)
@@ -533,17 +642,26 @@ def run_experiment(
             accuracy_score(y, signal_oof_prediction)
         ),
         "baseline_accuracy": float(accuracy_score(y, baseline_oof_prediction)),
+        "blend_accuracy": float(accuracy_score(y, blend_oof_prediction)),
         "signal_f1": float(f1_score(y, signal_oof_prediction)),
         "baseline_f1": float(f1_score(y, baseline_oof_prediction)),
+        "blend_f1": float(f1_score(y, blend_oof_prediction)),
         "signal_roc_auc": float(roc_auc_score(y, signal_oof)),
         "baseline_roc_auc": float(roc_auc_score(y, baseline_oof)),
+        "blend_roc_auc": float(roc_auc_score(y, blend_oof)),
     }
-    promotion_status = (
+    family_promotion_status = (
         "promoted"
         if comparison["signal_accuracy"] > comparison["baseline_accuracy"]
         else "baseline_retained"
     )
-    recommended = primary if promotion_status == "promoted" else baseline_submission
+    blend_promotion_status = (
+        "promoted"
+        if comparison["blend_accuracy"] > comparison["baseline_accuracy"]
+        else "baseline_retained"
+    )
+    promotion_status = blend_promotion_status
+    recommended = blend if blend_promotion_status == "promoted" else baseline_submission
     recommended_path = outputs / "submission_recommended.csv"
     validate_submission(recommended, test["PassengerId"])
     recommended.to_csv(recommended_path, index=False)
@@ -568,12 +686,16 @@ def run_experiment(
             "SignalPrediction": signal_oof_prediction,
             "BaselineProbability": baseline_oof,
             "BaselinePrediction": baseline_oof_prediction,
+            "BlendProbability": blend_oof,
+            "BlendPrediction": blend_oof_prediction,
+            "BlendFamilyWeight": selected_blend_weight,
         }
     )
     oof_path = reports / "oof_predictions.csv"
     folds_path = reports / "outer_fold_metrics.csv"
     comparison_path = reports / "model_comparison.csv"
     config_path = reports / "configuration_results.csv"
+    blend_config_path = reports / "blend_configuration_results.csv"
     difference_path = reports / "submission_difference.csv"
     oof.to_csv(oof_path, index=False)
     pd.DataFrame(fold_metrics).to_csv(folds_path, index=False)
@@ -590,6 +712,12 @@ def run_experiment(
                 "accuracy": comparison["baseline_accuracy"],
                 "f1": comparison["baseline_f1"],
                 "roc_auc": comparison["baseline_roc_auc"],
+            },
+            {
+                "model": "nested_catboost_family_blend",
+                "accuracy": comparison["blend_accuracy"],
+                "f1": comparison["blend_f1"],
+                "roc_auc": comparison["blend_roc_auc"],
             },
         ]
     ).to_csv(comparison_path, index=False)
@@ -615,6 +743,28 @@ def run_experiment(
             ]
         ]
     ).to_csv(config_path, index=False)
+    pd.DataFrame(
+        [
+            {
+                "scope": scope,
+                "outer_fold": fold,
+                "family_weight": result["family_weight"],
+                "mean_accuracy": result["mean_accuracy"],
+                "std_accuracy": result["std_accuracy"],
+                "fold_accuracies": json.dumps(result["fold_accuracies"]),
+            }
+            for scope, fold, result in [
+                *[
+                    ("nested_outer_selection", item["outer_fold"], item)
+                    for item in nested_blend_results
+                ],
+                *[
+                    ("full_training_selection", 0, item)
+                    for item in full_blend_results
+                ],
+            ]
+        ]
+    ).to_csv(blend_config_path, index=False)
 
     difference = primary.merge(
         baseline_submission, on="PassengerId", suffixes=("_new", "_baseline")
@@ -634,12 +784,14 @@ def run_experiment(
                 "",
                 f"- Same-split signal OOF accuracy: `{comparison['signal_accuracy']:.4f}`",
                 f"- Same-split CatBoost baseline OOF accuracy: `{comparison['baseline_accuracy']:.4f}`",
+                f"- Nested blend OOF accuracy: `{comparison['blend_accuracy']:.4f}`",
+                f"- Deployment family blend weight: `{deployment_family_weight:.2f}`",
                 f"- Group-disjoint signal accuracy: `{grouped['signal_accuracy']:.4f}`",
                 f"- Group-disjoint baseline accuracy: `{grouped['baseline_accuracy']:.4f}`",
                 f"- Uploaded CatBoost Kaggle baseline: `0.79186`",
                 f"- Test predictions changed from uploaded baseline: `{int(difference['Changed'].sum())}`",
                 f"- Selected configuration: `{json.dumps(selected, sort_keys=True)}`",
-                f"- Promotion decision: `{promotion_status}`",
+                f"- Blend promotion decision: `{blend_promotion_status}`",
                 f"- Recommended Kaggle file: `outputs/{recommended_path.name}`",
                 "",
                 "The 0.83 Kaggle target remains unverified until the recommended CSV is uploaded.",
@@ -651,6 +803,7 @@ def run_experiment(
 
     output_paths = {
         "submission": str(primary_path.relative_to(output_root)),
+        "blend_submission": str(blend_path.relative_to(output_root)),
         "recommended_submission": str(recommended_path.relative_to(output_root)),
         "baseline_submission": str(baseline_path.relative_to(output_root)),
         "model": str(model_path.relative_to(output_root)),
@@ -658,6 +811,7 @@ def run_experiment(
         "fold_metrics": str(folds_path.relative_to(output_root)),
         "comparison": str(comparison_path.relative_to(output_root)),
         "configuration_results": str(config_path.relative_to(output_root)),
+        "blend_configuration_results": str(blend_config_path.relative_to(output_root)),
         "difference_audit": str(difference_path.relative_to(output_root)),
         "overview": str(overview_path.relative_to(output_root)),
     }
@@ -683,6 +837,20 @@ def run_experiment(
         "inner_folds": inner_folds,
         "selected_configuration": selected,
         "promotion_status": promotion_status,
+        "blend_promotion_status": blend_promotion_status,
+        "family_promotion_status": family_promotion_status,
+        "blend": {
+            "threshold": 0.50,
+            "candidate_family_weights": list(_blend_weights()),
+            "selected_family_weight": deployment_family_weight,
+            "outer_selected_family_weights": [
+                metric["blend_family_weight"] for metric in fold_metrics
+            ],
+            "outer_oof_comparison": {
+                "blend_accuracy": comparison["blend_accuracy"],
+                "baseline_accuracy": comparison["baseline_accuracy"],
+            },
+        },
         "fold_metrics": fold_metrics,
         "comparison": comparison,
         "grouped_robustness": grouped,
@@ -709,6 +877,8 @@ def run_experiment(
         "selected_configuration": selected,
         "comparison": comparison,
         "promotion_status": promotion_status,
+        "blend_promotion_status": blend_promotion_status,
+        "selected_family_weight": deployment_family_weight,
         "submission_sha256": output_hashes["recommended_submission"],
     }
     with index_path.open("a", encoding="utf-8", newline="\n") as handle:

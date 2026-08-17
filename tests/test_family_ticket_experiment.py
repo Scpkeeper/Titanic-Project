@@ -101,12 +101,22 @@ class FamilyTicketExperimentTests(unittest.TestCase):
                 output / "outputs" / "submission_recommended.csv"
             )
             validate_submission(recommended, test["PassengerId"])
+            blend = pd.read_csv(
+                output / "outputs" / "submission_catboost_family_blend.csv"
+            )
+            validate_submission(blend, test["PassengerId"])
             self.assertTrue((output / "models" / "family_ticket_catboost.joblib").is_file())
             manifest_path = output / "reports" / "family_ticket" / "run_manifest.json"
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
             validate_manifest(manifest)
             self.assertIn(manifest["promotion_status"], {"promoted", "baseline_retained"})
             self.assertIn("recommended_submission", manifest["output_paths"])
+            self.assertIn("blend", manifest)
+            self.assertIn("selected_family_weight", manifest["blend"])
+            self.assertIn("blend_configuration_results", manifest["output_paths"])
+            self.assertIn(
+                manifest["blend_promotion_status"], {"promoted", "baseline_retained"}
+            )
             index_path = output / "reports" / "family_ticket" / "experiment_index.jsonl"
             self.assertEqual(len(index_path.read_text(encoding="utf-8").splitlines()), 1)
 
