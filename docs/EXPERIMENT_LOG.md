@@ -23,23 +23,37 @@
    robustness check.
 6. Added a promotion gate: the experiment can replace the existing submission
    only when nested OOF accuracy is strictly better than the baseline.
-7. Generated and validated the model, submissions, fold reports, configuration
-   results, prediction-difference audit, manifest, and SHA-256 hashes.
+7. Added fixed-weight inner-fold blend selection and evaluated the selected
+   weight independently in each outer fold.
+8. Generated and validated the model, family, baseline, blend, and recommended
+   submissions, fold reports, configuration results, prediction-difference
+   audit, manifest, and SHA-256 hashes.
 
 ## Full-run result
 
-| Measure | Family/ticket signal | Same-split CatBoost baseline |
-|---|---:|---:|
-| Nested OOF accuracy | 0.8328 | 0.8384 |
-| OOF F1 | 0.7639 | 0.7700 |
-| OOF ROC-AUC | 0.8904 | 0.8871 |
-| Group-disjoint accuracy | 0.8103 | 0.8283 |
+| Measure | Family/ticket signal | Same-split CatBoost baseline | Nested blend |
+|---|---:|---:|---:|
+| Nested OOF accuracy | 0.8328 | 0.8384 | 0.8406 |
+| OOF F1 | 0.7639 | 0.7700 | 0.7753 |
+| OOF ROC-AUC | 0.8904 | 0.8871 | 0.8884 |
+| Group-disjoint accuracy | 0.8103 | 0.8283 | not evaluated |
 
 The signal improves probability ranking slightly (ROC-AUC), but it does not
 improve classification accuracy and is weaker under the group-disjoint test.
-The promotion result is therefore `baseline_retained`. The recommended file is
-byte-equivalent to the uploaded CatBoost baseline; the experimental signal file
-changes 16 of 418 predictions and is retained for an optional Kaggle comparison.
+Its family-only promotion result is therefore `baseline_retained`. The nested
+blend improves OOF accuracy over the same-split baseline and its promotion
+result is `promoted` under the strict accuracy-only gate. Full-data inner
+selection chose family weight `0.00`, so the deployment candidate uses the
+freshly fitted same-split baseline probabilities at threshold `0.50`; it is not
+a family-probability mixture. The recommended file is byte-equivalent to
+`outputs/submission_catboost_family_blend.csv` and changes 15 of 418 predictions
+from the uploaded baseline. The family-only file changes 16 predictions.
+
+The family/ticket submission later received a public Kaggle score of `0.78229`,
+which is `0.00957` below the uploaded CatBoost baseline score of `0.79186`.
+This leaderboard score is a post-run audit observation only: it was not used to
+tune features, thresholds, policies, or blend weight, and it does not alter the
+strict nested-OOF promotion gate.
 
 ## Reproduce
 
@@ -52,13 +66,10 @@ python -m unittest discover -s tests -v
 
 ## What to do next
 
-1. Upload `outputs/submission_family_ticket_catboost.csv` to Kaggle as a single
-   controlled experiment and record its public score. Do not call it a 0.83
-   model before Kaggle verifies it.
+1. Upload the family/CatBoost probability blend as the next single controlled
+   Kaggle candidate and record its public score separately from the family-only
+   score of `0.78229`. Do not use either public score for model selection.
 2. Keep `outputs/submission_recommended.csv` as the safe current recommendation
-   unless the experimental file beats `0.79186`.
-3. If another iteration is warranted, test repeated nested CV and a compact
-   probability blend between the baseline and signal model. Select blend weight
-   entirely inside inner folds and keep the same promotion gate.
-4. Stop model iteration if repeated CV does not show a stable gain. A guaranteed
+   unless the blend passes the strict nested-OOF promotion gate.
+3. Stop model iteration if repeated CV does not show a stable gain. A guaranteed
    `0.83` from official data alone cannot be honestly promised from local CV.
